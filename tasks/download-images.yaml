@@ -1,0 +1,21 @@
+- name: Read the VM list JSON file
+  ansible.builtin.slurp:
+    src: /etc/pve/.vmlist
+  register: vmlist_json
+- name: Parse JSON content and find next VM ID
+  ansible.builtin.set_fact:
+    next_vm_id: "{{ vmlist_json.content | b64decode | from_json  | json_query('ids') | dict2items  | json_query('[].key') | map('int') | list | max + 1 }}"
+- name: check against minimum vm id
+  ansible.builtin.set_fact:
+    next_vm_id: "{{ templateStartingID | int }}"
+  when: next_vm_id | int < templateStartingID
+- name: create iso folder
+  ansible.builtin.file:
+    path: "{{ isopath }}"
+    state: directory
+    mode: '0755'
+- name: Copy cloud-init images
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ isopath }}/{{ item.templateName }}.qcow2"
+  with_items: "{{ cloudimgs }}"

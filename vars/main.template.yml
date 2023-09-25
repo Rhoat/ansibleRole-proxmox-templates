@@ -1,0 +1,20 @@
+---
+# vars file
+isopath: /var/isos
+templateMemory: 2048
+templateCores: 2
+templateDiskSize: 32G
+templateStartingID: 8000
+importStorage: local-lvm #iscsi-lvm
+cloudimgs:
+  - url: https://cloud-images.ubuntu.com/releases/20.04/release/ubuntu-20.04-server-cloudimg-amd64.img
+    templateName: ubuntu-20.04-server
+    additionalDescription: ""
+  - url: https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img
+    templateName: ubuntu-22.04-server
+  - url: https://cloud-images.ubuntu.com/releases/23.04/release/ubuntu-23.04-server-cloudimg-amd64.img
+    templateName: ubuntu-23.04-server
+ciuser: # cloud-init user
+ipconfig0: ip=dhcp # ip6=auto,ip=dhcp
+sshkey: ""
+installAgent: true

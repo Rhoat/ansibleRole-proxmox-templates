@@ -1,0 +1,36 @@
+- name: Create description for VMs
+  set_fact:
+    dynamic_fact_for_{{ item.templateName | hash('sha1')}}: "This template is using the {{ importStorage }} storage and is configured with {{ templateMemory }} MB of RAM and {{ templateCores }} CPU cores."
+  with_items: "{{ cloudimgs }}"
+  loop_control:
+    extended: true
+- name: Create VMs
+  ansible.builtin.shell:
+    cmd: qm create {{ (next_vm_id | int)  + ansible_loop.index  | int }} --memory {{ templateMemory }} --core {{ templateCores }} --name {{ item.templateName }} --net0 virtio,bridge=vmbr0 --description "{{ hostvars[inventory_hostname]['dynamic_fact_for_' + item.templateName |  hash('sha1')] }} {{ item.additionalDescription | default('') }}"
+  register: command_result
+  failed_when:
+    - '"already exists" not in command_result.stderr'
+    - command_result.rc != 0
+  with_items: "{{ cloudimgs }}"
+  loop_control:
+    extended: true
+- name: copy ssh key to proxmox
+  ansible.builtin.copy:
+    content: "{{ sshkey }}"
+    dest: "{{ isopath }}/id_rsa.pub"
+    owner: root
+    group: root
+    mode: '0644'
+- name: set cloud init settings
+  ansible.builtin.script: "config.sh {{ (next_vm_id | int)  + ansible_loop.index  | int }} {{ ipconfig0 }} {{ isopath }}/id_rsa.pub {{ ciuser }} {{ importStorage }} {{ isopath }}/{{ item.templateName }}.qcow2"
+  with_items: "{{ cloudimgs }}"
+  register: config
+  changed_when: "'Skipping' not in config.stdout"
+  loop_control:
+    extended: true
+- name: convert to template
+  ansible.builtin.shell:
+    cmd: qm template {{ (next_vm_id | int)  + ansible_loop.index  | int }}
+  with_items: "{{ cloudimgs }}"
+  loop_control:
+    extended: true

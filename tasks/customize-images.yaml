@@ -1,0 +1,17 @@
+- name: install lobguestfs tools
+  apt:
+    name: libguestfs-tools
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  when: installAgent | bool
+- name: add install agent
+  ansible.builtin.shell: |
+    virt-customize -a {{ isopath }}/{{ item.templateName }}.qcow2 --install qemu-guest-agent 
+  with_items: "{{ cloudimgs }}"
+  when: installAgent | bool
+  loop_control:
+    extended: true
+- name: resize cloud-init images
+  ansible.builtin.command: "qemu-img resize {{ isopath }}/{{ item.templateName }}.qcow2 {{ templateDiskSize }}"
+  with_items: "{{ cloudimgs }}"
