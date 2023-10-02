@@ -1,14 +1,26 @@
 - name: Read the VM list JSON file
+  ansible.builtin.shell:
+    cmd: qm list -full
+  register: qm_list
+- name: set default next_vm_id
+  ansible.builtin.set_fact:
+    next_vm_id: 100
+- name: Read the VM list JSON file
   ansible.builtin.slurp:
     src: /etc/pve/.vmlist
   register: vmlist_json
+  when: qm_list.stdout != ""
 - name: Parse JSON content and find next VM ID
   ansible.builtin.set_fact:
     next_vm_id: "{{ vmlist_json.content | b64decode | from_json  | json_query('ids') | dict2items  | json_query('[].key') | map('int') | list | max + 1 }}"
+  when: qm_list.stdout != ""
 - name: check against minimum vm id
   ansible.builtin.set_fact:
     next_vm_id: "{{ templateStartingID | int }}"
   when: next_vm_id | int < templateStartingID
+- name: debug
+  ansible.builtin.debug:
+    msg: "{{ next_vm_id }}"
 - name: create iso folder
   ansible.builtin.file:
     path: "{{ isopath }}"
