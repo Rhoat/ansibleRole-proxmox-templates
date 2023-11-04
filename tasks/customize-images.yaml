@@ -7,9 +7,15 @@
   when: installAgent | bool
 - name: add install agent
   ansible.builtin.shell: |
-    virt-customize -a {{ isopath }}/{{ item.templateName }}.qcow2 --install qemu-guest-agent --truncate /etc/machine-id
+    virt-customize -a {{ isopath }}/{{ item.templateName }}.qcow2 --install qemu-guest-agent
   with_items: "{{ cloudimgs }}"
   when: installAgent | bool
+  loop_control:
+    extended: true
+- name: fix machine id
+  ansible.builtin.shell: |
+    virt-customize -a {{ isopath }}/{{ item.templateName }}.qcow2 --run {{ isopath }}/clear-machine-id.sh
+  with_items: "{{ cloudimgs }}"
   loop_control:
     extended: true
 - name: resize cloud-init images
