@@ -31,3 +31,8 @@
     url: "{{ item.url }}"
     dest: "{{ isopath }}/{{ item.templateName }}.qcow2"
   with_items: "{{ cloudimgs }}"
+- name: script tp clear machine id
+  ansible.builtin.copy:
+    src: clear-machine-id.sh
+    dest: "{{ isopath }}/clear-machine-id.sh"
+    mode: '0755'
